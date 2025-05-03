@@ -29,6 +29,7 @@
       localStorage.setItem('logs', JSON.stringify(logs));
       alert("Feed added!");
       this.reset();
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
     });
   </script>
 </body>
