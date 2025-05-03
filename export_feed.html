@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Export Feed Chart</title>
+</head>
+<body>
+  <h2>Export Today's Feed Chart</h2>
+  <button onclick="exportToExcel()">Download Excel</button>
+  <button onclick="location.href='index.html'">Back</button>
+
+  <script>
+    function exportToExcel() {
+      const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
+      const today = new Date().toISOString().split('T')[0];
+      let csvContent = 'Feed Number,Item,Quantity,Energy (kcal),Protein (g)\n';
+
+      logs.filter(l => l.date === today).forEach(l => {
+        const ref = lookup[l.item.toLowerCase().replace(/\s+/g, '')];
+        const factor = ref ? l.quantity / ref.quantity : 1;
+        const energy = ref ? (ref.calories * factor).toFixed(0) : 'N/A';
+        const protein = ref ? (ref.protein * factor).toFixed(1) : 'N/A';
+        csvContent += `${l.feedNumber},${l.item},${l.quantity},${energy},${protein}\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `FeedChart_${today}.csv`;
+      link.click();
+    }
+  </script>
+</body>
+</html>

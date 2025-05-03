@@ -2,71 +2,213 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>NutriTrack</title>
+  <title>NutriTrack Dashboard</title>
   <style>
     body {
       margin: 0;
       font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      padding: 1rem;
+      background: #f4f4f4;
     }
-    .top {
+    .grid {
       display: flex;
-      flex: 1;
+      justify-content: space-between;
+      margin-bottom: 2rem;
     }
-    .half {
+    .column {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
       flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2em;
+      margin: 0 0.5rem;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .column h3 {
+      margin-top: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    th, td {
       border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
     }
-    .bottom {
-      padding: 1em;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-gap: 10px;
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-top: 2rem;
     }
-    .bottom button {
-      padding: 1em;
-      font-size: 1em;
+    .button-group {
+      flex: 1;
+      margin: 0 0.5rem;
+    }
+    .button-group button {
+      width: 100%;
+      margin-bottom: 0.5rem;
+      padding: 1rem;
+      font-size: 1rem;
+      border: none;
+      background: #007bff;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
+    }
+    .button-group button:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
-  <div class="top">
-    <div class="half" id="todayCalories">Calories: 0</div>
-    <div class="half" id="todayProtein">Protein: 0g</div>
+  <div class="grid">
+    <div class="column">
+      <h3>Past 7 Days</h3>
+    <canvas id="calorieChart" height="150"></canvas>
+    <div id="proteinLabels" style="display: flex; justify-content: space-around; margin-top: 0.5rem;"></div>
+    </div>
+    <div class="column">
+      <h3>Today</h3>
+      <p id="todayEnergy">Energy: 0 kcal (<span id="energyChange">0%</span>)</p>
+      <p id="todayProtein">Protein: 0 g (<span id="proteinChange">0%</span>)</p>
+    </div>
+    <div class="column">
+      <h3>Today’s Feed Summary</h3>
+      <table>
+        <thead>
+          <tr><th>Feed #</th><th>Ingredients</th><th>Energy</th><th>Protein</th></tr>
+        </thead>
+        <tbody id="feedSummary"></tbody>
+      </table>
+    </div>
   </div>
-  <div class="bottom">
-    <button onclick="location.href='add_feed.html'">Add Feed</button>
-    <button onclick="location.href='view_today.html'">Today's Feed Chart</button>
-    <button onclick="location.href='view_date.html'">View by Date</button>
-    <button onclick="location.href='add_item.html'">Add Item to Lookup</button>
-    <button onclick="location.href='add_item.html'">View Lookup Table</button>
+
+  <div class="buttons">
+    <div class="button-group">
+      <button onclick="location.href='add_feed.html'">Add Feed</button>
+      <button onclick="location.href='view_today.html'">View Today’s Feed Chart</button>
+      <button onclick="location.href='view_date.html'">View Feed by Date</button>
+      <button onclick="location.href='export_feed.html'">Export Feed Chart</button>
+    </div>
+    <div class="button-group">
+      <button onclick="location.href='add_item.html'">Add Ingredients</button>
+      <button onclick="location.href='add_item.html'">View/Edit Ingredients</button>
+    </div>
   </div>
 
   <script>
+    function normalize(name) {
+      return name.toLowerCase().replace(/\s+/g, '');
+    }
+
     const logs = JSON.parse(localStorage.getItem('logs') || '[]');
     const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
     const today = new Date().toISOString().split('T')[0];
-    let totalCalories = 0;
-    let totalProtein = 0;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
-    logs.filter(log => log.date === today).forEach(log => {
-      const item = lookup[log.item];
-      if (item) {
-        const factor = log.quantity / item.quantity;
-        totalCalories += item.calories * factor;
-        totalProtein += item.protein * factor;
+    let todayCal = 0, todayPro = 0;
+    let yestCal = 0, yestPro = 0;
+    const feedMap = {};
+
+    logs.forEach(l => {
+      const ref = lookup[normalize(l.item)];
+      const factor = ref ? l.quantity / ref.quantity : 1;
+      const energy = ref ? ref.calories * factor : 0;
+      const protein = ref ? ref.protein * factor : 0;
+
+      if (l.date === today) {
+        todayCal += energy;
+        todayPro += protein;
+        if (!feedMap[l.feedNumber]) feedMap[l.feedNumber] = { energy: 0, protein: 0, items: [] };
+        feedMap[l.feedNumber].energy += energy;
+        feedMap[l.feedNumber].protein += protein;
+        feedMap[l.feedNumber].items.push(l.item);
+      } else if (l.date === yesterday) {
+        yestCal += energy;
+        yestPro += protein;
       }
     });
 
-    document.getElementById('todayCalories').textContent = "Calories: " + totalCalories.toFixed(0);
-    document.getElementById('todayProtein').textContent = "Protein: " + totalProtein.toFixed(1) + "g";
+    document.getElementById('yesterdayEnergy').textContent = `Energy: ${yestCal.toFixed(0)} kcal`;
+    document.getElementById('yesterdayProtein').textContent = `Protein: ${yestPro.toFixed(1)} g`;
+
+    document.getElementById('todayEnergy').textContent = `Energy: ${todayCal.toFixed(0)} kcal`;
+    document.getElementById('todayProtein').textContent = `Protein: ${todayPro.toFixed(1)} g`;
+
+    document.getElementById('energyChange').textContent = yestCal ? `${((todayCal - yestCal) / yestCal * 100).toFixed(1)}%` : "100%";
+    document.getElementById('proteinChange').textContent = yestPro ? `${((todayPro - yestPro) / yestPro * 100).toFixed(1)}%` : "100%";
+
+    const tbody = document.getElementById('feedSummary');
+    Object.keys(feedMap).sort().forEach(feedNum => {
+      const row = document.createElement('tr');
+      const f = feedMap[feedNum];
+      row.innerHTML = `
+        <td>${feedNum}</td>
+        <td>${f.items.join(', ')}</td>
+        <td>${f.energy.toFixed(0)}</td>
+        <td>${f.protein.toFixed(1)}</td>
+      `;
+      tbody.appendChild(row);
+    });
   </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+  const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
+  const normalize = name => name.toLowerCase().replace(/\s+/g, '');
+  const today = new Date();
+  const dates = [...Array(7).keys()].map(i => {
+    const d = new Date(today - (6 - i) * 86400000);
+    return d.toISOString().split('T')[0];
+  });
+
+  const calorieData = [];
+  const proteinData = [];
+
+  dates.forEach(date => {
+    let cal = 0, pro = 0;
+    logs.forEach(l => {
+      if (l.date === date) {
+        const ref = lookup[normalize(l.item)];
+        const factor = ref ? l.quantity / ref.quantity : 1;
+        cal += ref ? ref.calories * factor : 0;
+        pro += ref ? ref.protein * factor : 0;
+      }
+    });
+    calorieData.push(cal.toFixed(0));
+    proteinData.push(pro.toFixed(1));
+  });
+
+  const ctx = document.getElementById('calorieChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: dates.map(d => d.slice(5)),
+      datasets: [{
+        label: 'Calories',
+        data: calorieData,
+        backgroundColor: '#007bff'
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // Render protein ovals
+  const proteinLabels = document.getElementById('proteinLabels');
+  proteinLabels.innerHTML = proteinData.map(p => `
+    <div style="background:#007bff;color:white;padding:5px 10px;border-radius:50px;font-size:0.8em">${p}g</div>
+  `).join('');
+</script>
+
 </body>
 </html>
