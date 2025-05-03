@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NutriTrack</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .top {
+      display: flex;
+      flex: 1;
+    }
+    .half {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      border: 1px solid #ccc;
+    }
+    .bottom {
+      padding: 1em;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-gap: 10px;
+    }
+    .bottom button {
+      padding: 1em;
+      font-size: 1em;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="half" id="todayCalories">Calories: 0</div>
+    <div class="half" id="todayProtein">Protein: 0g</div>
+  </div>
+  <div class="bottom">
+    <button onclick="location.href='add_feed.html'">Add Feed</button>
+    <button onclick="location.href='view_today.html'">Today's Feed Chart</button>
+    <button onclick="location.href='view_date.html'">View by Date</button>
+    <button onclick="location.href='add_item.html'">Add to Lookup</button>
+  </div>
+
+  <script>
+    const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+    const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
+    const today = new Date().toISOString().split('T')[0];
+    let totalCalories = 0;
+    let totalProtein = 0;
+
+    logs.filter(log => log.date === today).forEach(log => {
+      const item = lookup[log.item];
+      if (item) {
+        const factor = log.quantity / item.quantity;
+        totalCalories += item.calories * factor;
+        totalProtein += item.protein * factor;
+      }
+    });
+
+    document.getElementById('todayCalories').textContent = "Calories: " + totalCalories.toFixed(0);
+    document.getElementById('todayProtein').textContent = "Protein: " + totalProtein.toFixed(1) + "g";
+  </script>
+</body>
+</html>

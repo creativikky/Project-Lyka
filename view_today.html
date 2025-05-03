@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Today's Feed Chart</title>
+</head>
+<body>
+  <h2>Today's Feed Chart</h2>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Feed #</th>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Energy</th>
+        <th>Protein</th>
+      </tr>
+    </thead>
+    <tbody id="feedTable"></tbody>
+  </table>
+  <button onclick="location.href='index.html'">Back</button>
+
+  <script>
+    const logs = JSON.parse(localStorage.getItem('logs') || '[]');
+    const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
+    const today = new Date().toISOString().split('T')[0];
+    const tbody = document.getElementById('feedTable');
+
+    logs.filter(l => l.date === today).forEach(l => {
+      const row = document.createElement('tr');
+      const ref = lookup[l.item];
+      const factor = ref ? l.quantity / ref.quantity : 1;
+      const energy = ref ? (ref.calories * factor).toFixed(0) : 'N/A';
+      const protein = ref ? (ref.protein * factor).toFixed(1) : 'N/A';
+
+      row.innerHTML = `
+        <td>${l.feedNumber}</td>
+        <td>${l.item}</td>
+        <td>${l.quantity}</td>
+        <td>${energy}</td>
+        <td>${protein}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  </script>
+</body>
+</html>

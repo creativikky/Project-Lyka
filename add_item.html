@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Item to Lookup</title>
+</head>
+<body>
+  <h2>Add Ingredient</h2>
+  <form id="itemForm">
+    <label>Item name: <input type="text" id="name" required></label><br>
+    <label>Quantity: <input type="number" id="quantity" required></label><br>
+    <label>Equivalent: <input type="text" id="equivalent" required></label><br>
+    <label>Calories: <input type="number" id="calories" required></label><br>
+    <label>Protein: <input type="number" id="protein" required></label><br>
+    <button type="submit">Add Item</button>
+  </form>
+  <button onclick="location.href='index.html'">Back</button>
+
+  <script>
+    document.getElementById('itemForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const quantity = parseFloat(document.getElementById('quantity').value);
+      const equivalent = document.getElementById('equivalent').value;
+      const calories = parseFloat(document.getElementById('calories').value);
+      const protein = parseFloat(document.getElementById('protein').value);
+      const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
+      lookup[name] = { quantity, equivalent, calories, protein };
+      localStorage.setItem('lookup', JSON.stringify(lookup));
+      alert("Item added!");
+      this.reset();
+    });
+  </script>
+</body>
+</html>
