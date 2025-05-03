@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +17,16 @@
       </tr>
     </thead>
     <tbody id="feedTable"></tbody>
+    <tfoot>
+      <tr>
+        <th colspan="3">Total</th>
+        <th id="totalEnergy">0</th>
+        <th id="totalProtein">0</th>
+      </tr>
+    </tfoot>
   </table>
+  <br>
+  <button onclick="location.href='add_feed.html'">Add Another Feed</button>
   <button onclick="location.href='index.html'">Back</button>
 
   <script>
@@ -26,6 +34,8 @@
     const lookup = JSON.parse(localStorage.getItem('lookup') || '{}');
     const today = new Date().toISOString().split('T')[0];
     const tbody = document.getElementById('feedTable');
+    let totalEnergy = 0;
+    let totalProtein = 0;
 
     logs.filter(l => l.date === today).forEach(l => {
       const row = document.createElement('tr');
@@ -33,6 +43,9 @@
       const factor = ref ? l.quantity / ref.quantity : 1;
       const energy = ref ? (ref.calories * factor).toFixed(0) : 'N/A';
       const protein = ref ? (ref.protein * factor).toFixed(1) : 'N/A';
+
+      if (energy !== 'N/A') totalEnergy += parseFloat(energy);
+      if (protein !== 'N/A') totalProtein += parseFloat(protein);
 
       row.innerHTML = `
         <td>${l.feedNumber}</td>
@@ -43,6 +56,9 @@
       `;
       tbody.appendChild(row);
     });
+
+    document.getElementById('totalEnergy').textContent = totalEnergy.toFixed(0);
+    document.getElementById('totalProtein').textContent = totalProtein.toFixed(1);
   </script>
 </body>
 </html>
