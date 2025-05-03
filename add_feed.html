@@ -17,6 +17,7 @@
   <button onclick="location.href='index.html'">Back</button>
 
   <script>
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
     document.getElementById('feedForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const date = document.getElementById('date').value;
