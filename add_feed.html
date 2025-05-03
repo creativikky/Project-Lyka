@@ -15,12 +15,9 @@
   </form>
   <button onclick="location.href='index.html'">Back</button>
 
-  <!-- ✅ Add this script block at the end of the body -->
   <script>
-    // This sets the default value of the date input to today's date
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
-    // This is your existing form submission logic
     document.getElementById('feedForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const date = document.getElementById('date').value;
@@ -32,9 +29,8 @@
       localStorage.setItem('logs', JSON.stringify(logs));
       alert("Feed added!");
       this.reset();
-      document.getElementById('date').value = new Date().toISOString().split('T')[0]; // reset to today again
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
     });
   </script>
 </body>
 </html>
-

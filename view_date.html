@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,14 +16,18 @@
         <th>Quantity</th>
         <th>Energy</th>
         <th>Protein</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="feedTable"></tbody>
   </table>
+  <br>
+  <button onclick="location.href='add_feed.html'">Add Feed</button>
   <button onclick="location.href='index.html'">Back</button>
 
   <script>
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
+
     function showFeeds() {
       const selectedDate = document.getElementById('dateInput').value;
       const logs = JSON.parse(localStorage.getItem('logs') || '[]');
@@ -32,22 +35,39 @@
       const tbody = document.getElementById('feedTable');
       tbody.innerHTML = '';
 
-      logs.filter(l => l.date === selectedDate).forEach(l => {
-        const row = document.createElement('tr');
-        const ref = lookup[l.item];
-        const factor = ref ? l.quantity / ref.quantity : 1;
-        const energy = ref ? (ref.calories * factor).toFixed(0) : 'N/A';
-        const protein = ref ? (ref.protein * factor).toFixed(1) : 'N/A';
+      logs.forEach((l, i) => {
+        if (l.date === selectedDate) {
+          const row = document.createElement('tr');
+          const ref = lookup[l.item];
+          const factor = ref ? l.quantity / ref.quantity : 1;
+          const energy = ref ? (ref.calories * factor).toFixed(0) : 'N/A';
+          const protein = ref ? (ref.protein * factor).toFixed(1) : 'N/A';
 
-        row.innerHTML = `
-          <td>${l.feedNumber}</td>
-          <td>${l.item}</td>
-          <td>${l.quantity}</td>
-          <td>${energy}</td>
-          <td>${protein}</td>
-        `;
-        tbody.appendChild(row);
+          row.innerHTML = `
+            <td>${l.feedNumber}</td>
+            <td contenteditable="true" onblur="editLog(${i}, 'item', this.innerText)">${l.item}</td>
+            <td contenteditable="true" onblur="editLog(${i}, 'quantity', this.innerText)">${l.quantity}</td>
+            <td>${energy}</td>
+            <td>${protein}</td>
+            <td><button onclick="deleteLog(${i})">Delete</button></td>
+          `;
+          tbody.appendChild(row);
+        }
       });
+    }
+
+    function editLog(index, key, value) {
+      let logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      if (key === 'quantity') value = parseFloat(value);
+      logs[index][key] = value;
+      localStorage.setItem('logs', JSON.stringify(logs));
+    }
+
+    function deleteLog(index) {
+      let logs = JSON.parse(localStorage.getItem('logs') || '[]');
+      logs.splice(index, 1);
+      localStorage.setItem('logs', JSON.stringify(logs));
+      showFeeds();
     }
   </script>
 </body>
